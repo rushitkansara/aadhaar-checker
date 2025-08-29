@@ -1,4 +1,4 @@
-# Aadhaar Card Checker
+# Aadhaar Card Number Validity Verifier
 
 A simple React-based web app that validates Aadhaar numbers by checking:
 	1.	Format Validation – Aadhaar must be 12 digits, first digit between 2–9.
