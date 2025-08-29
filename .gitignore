@@ -1,0 +1,9 @@
+# dependencies
+node_modules/
+
+# environment variables
+.env
+aadhaar-env/
+
+# macOS system files
+.DS_Store
