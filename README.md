@@ -28,21 +28,21 @@ Privacy Note: No Aadhaar number, photo, or personal data is stored or uploaded a
 
 ## Folder Structure
 
-aadhaar-checker/
-├── public/
-│   └── index.html
-├── src/
-│   ├── components/
-│   │   ├── AadhaarInput.js       # Textbox input + validation
-│   │   ├── FileUpload.js         # Upload image + OCR + validation
-│   │   ├── CameraCapture.js      # Live webcam capture + OCR + validation
-│   ├── utils/
-│   │   └── verhoeff.js           # Verhoeff checksum algorithm
-│   ├── App.js                    # Main app layout
-│   ├── index.js                  # React entry point
-│   └── styles.css                # Styling
-├── package.json
-└── README.md
+- aadhaar-checker/
+- ├── public/
+- │   └── index.html
+- ├── src/
+- │   ├── components/
+- │   │   ├── AadhaarInput.js       # Textbox input + validation
+- │   │   ├── FileUpload.js         # Upload image + OCR + validation
+- │   │   ├── CameraCapture.js      # Live webcam capture + OCR + validation
+- │   ├── utils/
+- │   │   └── verhoeff.js           # Verhoeff checksum algorithm
+- │   ├── App.js                    # Main app layout
+- │   ├── index.js                  # React entry point
+- │   └── styles.css                # Styling
+- ├── package.json
+- └── README.md
 
 
 ## Setup & Run Locally
