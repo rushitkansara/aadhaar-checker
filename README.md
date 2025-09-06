@@ -12,7 +12,8 @@ Privacy Note: No Aadhaar number, photo, or personal data is stored or uploaded a
 ## Demo Video
 
 
-https://github.com/user-attachments/assets/d3e25dd7-12e9-4f46-8077-98ff9f4725bc
+
+https://github.com/user-attachments/assets/a566ea34-9bb3-4df0-a0d0-0d32f887bab5
 
 
 
