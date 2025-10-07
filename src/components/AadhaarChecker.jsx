@@ -3,6 +3,10 @@ import React, { useRef, useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { validateAadhaar } from '../utils/aadhaarValidator';
+import AadhaarInput from './AadhaarInput';
+import FileUpload from './FileUpload';
+import CameraCapture from './CameraCapture';
+import './AadhaarChecker.css';
 
 export default function AadhaarChecker() {
   const [textInput, setTextInput] = useState('');
@@ -43,7 +47,7 @@ export default function AadhaarChecker() {
     }
   }
 
-  // OCR processing (same logic as before)
+  // OCR processing
   async function runOCRFromBlob(blob) {
     setProcessing(true);
     setStatus({ type: 'info', message: 'Extracting text from image...' });
@@ -52,36 +56,7 @@ export default function AadhaarChecker() {
         logger: m => { /* optional progress */ }
       });
       const text = (data && data.text) ? data.text.replace(/\s+/g, ' ') : '';
-      const match = text.match(/\b[0-9]{12}\b/);
-      if (match) {
-        const candidate = match[0];
-        const r = validateAadhaar(candidate);
-        if (r.valid) {
-          setResult(r);
-          setStatus({ type: 'success', message: 'Yay! Aadhaar number format & checksum are valid.' });
-        } else {
-          setResult(null);
-          setStatus({ type: 'error', message: r.reason });
-        }
-      } else {
-        // fallback sliding window
-        const digitsOnly = text.replace(/[^0-9]/g, '');
-        let found = null;
-        for (let i = 0; i + 12 <= digitsOnly.length; i++) {
-          const seq = digitsOnly.slice(i, i + 12);
-          if (/^[2-9]/.test(seq)) {
-            const r = validateAadhaar(seq);
-            if (r.valid) { found = { seq, r }; break; }
-          }
-        }
-        if (found) {
-          setResult(found.r);
-          setStatus({ type: 'success', message: 'Yay! Aadhaar number format & checksum are valid.' });
-        } else {
-          setResult(null);
-          setStatus({ type: 'error', message: "No valid Aadhaar detected. Try retaking the photo (improve focus/lighting)." });
-        }
-      }
+      validateAadhaarFromText(text);
     } catch (err) {
       console.error('Tesseract error:', err);
       setStatus({ type: 'error', message: 'OCR failed — please try again.' });
@@ -90,7 +65,40 @@ export default function AadhaarChecker() {
     }
   }
 
-  // File upload handler (unchanged)
+  function validateAadhaarFromText(text) {
+    const match = text.match(/\b[0-9]{12}\b/);
+    if (match) {
+      const candidate = match[0];
+      const r = validateAadhaar(candidate);
+      if (r.valid) {
+        setResult(r);
+        setStatus({ type: 'success', message: 'Yay! Aadhaar number format & checksum are valid.' });
+      } else {
+        setResult(null);
+        setStatus({ type: 'error', message: r.reason });
+      }
+    } else {
+      // fallback sliding window
+      const digitsOnly = text.replace(/[^0-9]/g, '');
+      let found = null;
+      for (let i = 0; i + 12 <= digitsOnly.length; i++) {
+        const seq = digitsOnly.slice(i, i + 12);
+        if (/^[2-9]/.test(seq)) {
+          const r = validateAadhaar(seq);
+          if (r.valid) { found = { seq, r }; break; }
+        }
+      }
+      if (found) {
+        setResult(found.r);
+        setStatus({ type: 'success', message: 'Yay! Aadhaar number format & checksum are valid.' });
+      } else {
+        setResult(null);
+        setStatus({ type: 'error', message: "No valid Aadhaar detected. Try retaking the photo (improve focus/lighting)." });
+      }
+    }
+  }
+
+  // File upload handler
   function handleFileChange(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -227,45 +235,21 @@ export default function AadhaarChecker() {
         </header>
 
         <section className="card">
-          <div className="row">
-            <label>Type Aadhaar number</label>
-            <input
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value.replace(/[^0-9]/g, ''))}
-              placeholder="Enter 12-digit Aadhaar"
-            />
-            <div className="row-actions">
-              <button onClick={handleTextValidate}>Validate</button>
-              <button onClick={() => { setTextInput(''); setStatus({ type: 'idle', message: '' }); }}>Clear</button>
-            </div>
-          </div>
+          <AadhaarInput
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value.replace(/[^0-9]/g, ''))}
+            onValidate={handleTextValidate}
+            onClear={() => { setTextInput(''); setStatus({ type: 'idle', message: '' }); }}
+          />
 
-          <div className="row">
-            <label>Upload Aadhaar photo</label>
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-            <small>jpeg, png recommended</small>
-          </div>
+          <FileUpload onFileChange={handleFileChange} />
 
-          <div className="row">
-            <label>Take Aadhaar photo</label>
-
-            {/* VIDEO ELEMENT: this was missing previously — necessary for videoRef */}
-            <div style={{ marginBottom: 8 }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: '100%', maxWidth: 420, borderRadius: 8, background: '#000' }}
-              />
-            </div>
-
-            <div className="camera-actions">
-              <button onClick={startCamera}>Open Camera</button>
-              <button onClick={capturePhoto}>Capture</button>
-              <button onClick={stopCamera}>Stop Camera</button>
-            </div>
-          </div>
+          <CameraCapture
+            onStart={startCamera}
+            onCapture={capturePhoto}
+            onStop={stopCamera}
+            videoRef={videoRef}
+          />
 
           {processing && <div className="status info">⏳ Extracting text from image...</div>}
           {status.type === 'error' && <div className="status error">{status.message}</div>}
@@ -300,35 +284,6 @@ export default function AadhaarChecker() {
           </div>
         </footer>
       </div>
-
-      {/* inline styles (same as before) */}
-      <style>{`
-        :root { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
-        .app { padding: 20px; min-height: 100vh; background: #f6f7fb; color: #0f172a; }
-        .app.dark { background: #0b1220; color: #e6eef8; }
-        .container { max-width: 820px; margin: 0 auto; }
-        header h1 { margin: 0 0 6px 0; font-size: 22px; }
-        .sub { margin: 0 0 18px 0; opacity: 0.85; }
-        .card { background: #fff; padding: 18px; border-radius: 12px; box-shadow: 0 6px 18px rgba(16,24,40,0.06); }
-        .app.dark .card { background: rgba(255,255,255,0.03); box-shadow: none; }
-        .row { margin-bottom: 14px; }
-        label { display:block; font-weight:600; margin-bottom:6px; }
-        input[type="text"], input[type="file"], input[type="number"], textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #e6eef8; }
-        .row-actions { margin-top:8px; display:flex; gap:8px; }
-        button { background:#0b69ff; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
-        button:disabled { opacity:0.6; cursor:not-allowed; }
-        .camera-actions { display:flex; gap:8px; align-items:center; }
-        .status { margin-top:10px; padding:8px; border-radius:8px; }
-        .status.info { background:#eef2ff; color:#1e40af; }
-        .status.error { background:#fff1f2; color:#9f1239; }
-        .status.success { background:#ecfdf5; color:#065f46; }
-        .preview img { max-width:220px; border-radius:8px; margin-top:8px; }
-        .result { margin-top:12px; padding:12px; border-radius:8px; background:#f0fdf4; }
-        .result .big { font-weight:700; }
-        .masked { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; margin-top:8px; }
-        footer { margin-top:18px; display:flex; justify-content:space-between; align-items:center; }
-        .footer-actions { display:flex; gap:8px; }
-      `}</style>
     </div>
   );
 }

@@ -1,27 +1,49 @@
 import { validateVerhoeff } from './verhoeff';
 
 /**
- * validateAadhaar(aadhaarString)
- * Returns { valid: boolean, reason?: string, masked?: string }
+ * Validates an Aadhaar number.
+ *
+ * @param {string} aadhaarString The Aadhaar number to validate.
+ * @returns {{valid: boolean, reason?: string, masked?: string}} An object with the validation result.
  */
 export function validateAadhaar(aadhaarString) {
-  if (!aadhaarString) return { valid: false, reason: 'Empty input' };
-
-  const clean = aadhaarString.replace(/\s|-/g, '');
-  if (!/^\d{12}$/.test(clean)) {
-    return { valid: false, reason: 'Aadhaar must be exactly 12 digits' };
+  // 1. Check for empty input
+  if (!aadhaarString) {
+    return { valid: false, reason: 'Aadhaar number cannot be empty.' };
   }
 
-  if (!/^[2-9]/.test(clean)) {
-    return { valid: false, reason: 'Aadhaar must start with digits 2-9 (cannot start with 0 or 1)' };
+  // 2. Remove any whitespace or hyphens
+  const cleanAadhaar = unmaskAadhaar(aadhaarString).replace(/\s|-/g, '');
+
+  // 3. Check if the Aadhaar number is exactly 12 digits
+  if (!/^\d{12}$/.test(cleanAadhaar)) {
+    return { valid: false, reason: 'Aadhaar number must be exactly 12 digits long.' };
   }
 
-  // checksum check via Verhoeff
-  if (!validateVerhoeff(clean)) {
-    return { valid: false, reason: 'Invalid Aadhaar checksum' };
+  // 4. Check if the Aadhaar number starts with a digit from 2 to 9
+  if (!/^[2-9]/.test(cleanAadhaar)) {
+    return { valid: false, reason: 'Aadhaar number cannot start with 0 or 1.' };
   }
 
-  // masked version for display
-  const masked = `XXXX-XXXX-${clean.slice(-4)}`;
-  return { valid: true, masked };
+  // 5. Validate the checksum using the Verhoeff algorithm
+  if (!validateVerhoeff(cleanAadhaar)) {
+    return { valid: false, reason: 'Invalid Aadhaar number. Please check the digits and try again.' };
+  }
+
+  // 6. If all checks pass, the Aadhaar number is valid
+  const masked = `XXXX-XXXX-${cleanAadhaar.slice(-4)}`;
+
+
+/**
+ * Unmasks an Aadhaar number.
+ *
+ * @param {string} aadhaarString The Aadhaar number to unmask.
+ * @returns {string} The unmasked Aadhaar number.
+ */
+export function unmaskAadhaar(aadhaarString) {
+  if (!aadhaarString) {
+    return '';
+  }
+
+  return aadhaarString.replace(/X/g, '0');
 }
