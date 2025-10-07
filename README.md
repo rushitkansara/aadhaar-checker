@@ -9,14 +9,6 @@ A simple React-based web app that validates Aadhaar numbers by checking:
 
 **Privacy Note:** No Aadhaar number, photo, or personal data is stored or uploaded anywhere. Everything runs in the browser.
 
-## Demo
-
-*[A short GIF or screenshot showing the app in action would be great here!]*
-
-## Live Demo
-
-*[Link to a live demo if you have one]*
-
 ## Demo Video
 
 
